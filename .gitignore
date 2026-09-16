@@ -1,0 +1,31 @@
+# ---- big derived artifacts (regenerable; the cache alone is 5.4 GB) ----
+artifacts/cache/
+artifacts/results/
+artifacts/*.log
+# NOTE: artifacts/ is deliberately NOT ignored wholesale — git cannot re-include
+# files inside an ignored directory, and artifacts/figures + artifacts/deck are
+# the deliverables.
+
+outputs/
+checkpoints/
+features/
+*.pt
+*.pth
+*.ckpt
+*.npz
+
+# ---- environments and caches ----
+.venv/
+__pycache__/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# ---- secrets — never commit ----
+*token*.env
+.env
+hf_token*
+*.pem
+*.key
+
+# ---- macOS ----
+.DS_Store
