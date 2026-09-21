@@ -131,7 +131,7 @@ The same run inside a PCA-reduced space (basis fitted on train rows only):
 > control is only meaningful while dims-removed ≪ space dimension, which is why the full-1024
 > run is the headline.
 
-## F4. The direction manifold is not a planar circle **[solid]**
+## F4. The direction manifold is not a planar circle
 
 Probe R² on held-out values using only the top-k principal components (layer 16, `sal`):
 
@@ -148,7 +148,7 @@ Not overfitting: at layer 16 in the full space, train R² 0.9976 vs test 0.9921.
 between Part 1 and Part 2: *how many dimensions* (F3) → *what shape* (F4) → *can we drive
 it* (F8–F12).
 
-### F4b. The ring itself is low-dimensional; separating it from nuisance is not **[solid]**
+### F4b. The ring itself is low-dimensional; separating it from nuisance is not
 
 Two different statements, easily conflated:
 
@@ -170,7 +170,7 @@ usually show, and is worth a slide on its own.
 
 ---
 
-## F5. Pooling changes the curve, so it must be reported explicitly **[solid]**
+## F5. Pooling changes the curve, so it must be reported explicitly
 
 The disk is ~1.3 of 256 patches per frame, so a uniform mean dilutes it below 1 % of the
 pooled vector.
@@ -215,7 +215,7 @@ Two consequences:
 
 ---
 
-## F7. The low end of the speed range is below the encoder's resolution **[solid]**
+## F7. The low end of the speed range is below the encoder's resolution
 
 Rendering is pixel-quantised and the scale is ~20 px total displacement per m/s, so at
 magnitude 0.43 the measured per-frame step is 0.00–0.02 px.
@@ -316,7 +316,7 @@ target within the basis subspace.*
 ways — at K=32 each probe sees ~36 clips for a 1024-d ridge. That is a data limit of this
 dataset, not a property of the representation.*
 
-### F8c. Steering rotates the representation — it does not inject noise **[solid]**
+### F8c. Steering rotates the representation — it does not inject noise
 
 The control that separates "the intervention changed the encoding" from "the intervention
 found an adversarial direction that fools the probe": as the error to the **target** angle
@@ -362,7 +362,7 @@ distinguishes direction is that its readout is **2-dimensional and cyclic**, whi
 probe cannot drive it and why a chord through the ring lands in a semantically empty region
 (F12). That is a sharper claim than the paper's, and it is the one this data licenses.
 
-### F8b. Cross-variable leakage grows with the steering subspace **[solid]**
+### F8b. Cross-variable leakage grows with the steering subspace
 
 **The 3×3 matrix cannot be completed, and that is itself a finding about the data.**
 Speed and acceleration are **mutually exclusive in every supplied dataset** — no clip has
@@ -413,7 +413,7 @@ subspaces, not a law.
 
 ---
 
-## F9. The intervention is causal, but the network undoes it within ~4 blocks **[solid]**
+## F9. The intervention is causal, but the network undoes it within ~4 blocks
 
 F8 steers a pooled feature and reads it back at the *same* layer. This injects the edit
 into the live residual stream at layer 16 and lets the remaining blocks actually run,
@@ -460,7 +460,7 @@ by <2° across layers, so the decay is not a probe-quality artefact.*
 
 ---
 
-## F13. The ring carries a Fourier ladder — but only m ∈ {1, 2, 4}, and it is an *axis* code **[solid]**
+## F13. The ring carries a Fourier ladder — but only m ∈ {1, 2, 4}, and it is an *axis* code
 
 The 64 directions are equally spaced, so a DFT of the centroids in θ reads the harmonic
 content off directly. Noise floor from splitting the ~24 reps per angle in half.
@@ -554,7 +554,7 @@ floor from half-split reps; pixel control from `tracks_direction.npz`.
 
 ---
 
-## F14. Why the network undoes it: attention rotates the edit out of the readout subspace **[solid]**
+## F14. Why the network undoes it: attention rotates the edit out of the readout subspace
 
 F9 showed a Euclidean edit at L16 decays to ~15 % effect by four blocks. Reading the
 residual stream at **half-block resolution** (pre-norm block: `in` → `attn` → `out`) with
@@ -640,7 +640,7 @@ PCA and the centroids both computed on **train values only**, so reaching a held
 value is genuine interpolation along the curve. Direction uses a **periodic** spline;
 speed and acceleration use open ones.
 
-## F10. Spline steering is *worse* than multi-probe at hitting a target **[solid]**
+## F10. Spline steering is *worse* than multi-probe at hitting a target
 
 Same held-out probe, same targets, same held-out values as F8:
 
@@ -658,7 +658,7 @@ for the coordinates that make probe readouts equal the target — it optimises p
 quantity being scored. The spline simply moves to the target value's centroid. Endpoint
 accuracy was never Wurgaft et al.'s claim; the path is (F11, F12).
 
-## F11. The linear path is 74–130× further off-manifold — for **all three** variables **[solid]**
+## F11. The linear path is 74–130× further off-manifold — for **all three** variables
 
 Mean distance from the interpolation path to the manifold, over 150 random value pairs,
 endpoints identical by construction:
@@ -674,7 +674,7 @@ endpoints identical by construction:
 > chord genuinely leaves the data region — not yet that leaving it matters. F12 is the
 > test that does.
 
-## F12. Off-manifold does not imply off-behaviour — it depends on the topology **[solid]**
+## F12. Off-manifold does not imply off-behaviour — it depends on the topology
 
 The behavioural test: inject the edit into the live residual stream at a fraction `t`
 along each route, propagate, and read one block downstream. At t=0 and t=1 the two routes
@@ -707,7 +707,7 @@ the comparison isolates the route.
 > linear state at 13° and 91°. Certainty and alignment are well behaved at zero and are
 > used throughout. The corrected result is **much stronger** than the original.
 
-### F12b. What the off-manifold state actually *is*: axis and speed without direction **[solid]**
+### F12b. What the off-manifold state actually *is*: axis and speed without direction
 
 Reading other probes at that same t = 0.5 linear state settles what kind of state it is.
 Run on the `speed` dataset, where theta and speed are decorrelated (|r| = 0.001) so the
@@ -794,7 +794,7 @@ method (F10) is strictly preferable.
 
 ---
 
-## F15. The on-manifold edit survives propagation 3× better **[solid]**
+## F15. The on-manifold edit survives propagation 3× better
 
 The open question left by F14: a Euclidean edit gets rotated out of the readout subspace by
 attention — does an *on-manifold* edit resist that? Both methods steered to the **same
@@ -808,6 +808,29 @@ the same non-degenerate metric.
 | linear chord at t=0.5 | +0.024 | +0.011 | *(never carried any)* | 92 % |
 
 **Evidence:** `run_open2.py`; `artifacts/figures/retention_direction.png`.
+
+### Control: it is not a magnitude effect
+
+The two edits differ in size (‖Δ‖ = 8.5 for multi-probe, 22.1 for the spline), so retention
+could in principle be measuring *bigger edit survives better*. Rescaling the multi-probe edit —
+same direction, different size — settles it:
+
+| multi-probe edit | ‖Δ‖ | alignment at injection | after 4 blocks | **retained** |
+|---|---:|---:|---:|---:|
+| ×0.5 | 4.2 | +0.725 | +0.226 | **31.2 %** |
+| ×1.0 | 8.5 | +1.329 | +0.332 | 25.0 % |
+| ×2.0 | 17.0 | +2.537 | +0.552 | 21.7 % |
+| **×2.6** | **22.1** | +3.261 | +0.686 | **21.0 %** |
+| **spline (on-manifold)** | **22.1** | +1.030 | **+0.783** | **76.0 %** |
+
+**Retention falls as the Euclidean edit grows.** The confound runs the *opposite* way: the
+spline's larger size was a handicap, not an advantage. At **matched perturbation norm** the gap
+widens from 3× to **3.6×** (76.0 % against 21.0 %).
+
+The sharpest statement available: hand the Euclidean edit **three times the initial alignment**
+(+3.26 against +1.03) *and* the same perturbation budget, and it still ends up **below** the
+spline four blocks later — +0.686 against +0.783. What survives is not the size of the edit but
+whether it points somewhere the network maintains.
 
 ### This reverses the verdict of F10
 
@@ -848,7 +871,7 @@ is not merely descriptive of the representation — an intervention that respect
 
 ---
 
-## F16. Is the off-manifold state "within the margin of error"? No — but not for the obvious reason **[solid]**
+## F16. Is the off-manifold state "within the margin of error"? No — but not for the obvious reason
 
 The objection worth pre-empting: maybe the chord midpoint is a perfectly plausible state and we
 are reading noise in a wobbly spline fit. Three tests, and **the intuitive one fails**.
@@ -914,14 +937,14 @@ the state is not a noisy variant of a real state. It is structurally distinct.
 a weaker claim than it sounds, and the naive distance-from-curve framing actively contradicts it.
 Lead with the **radial shell** result (0 of 1,148), not the tube.
 
-> The general lesson is worth a sentence in the talk: in high dimensions, an off-distribution point
+> In high dimensions, an off-distribution point
 > is often **closer to the mean** than real data is, not farther from it. Distance-to-the-fit is the
 > wrong diagnostic; occupancy of the region is the right one.
 
 
 ---
 
-## F17. Continuous feature clamping transfers to a world model — and a single on-manifold edit beats it **[solid]**
+## F17. Continuous feature clamping transfers to a world model — and a single on-manifold edit beats it
 
 Borrowed directly from LLM interpretability: rather than asking a one-shot edit to survive, assert
 the feature at **every** block. F14 said attention rotates a Euclidean edit out of the readout
@@ -978,7 +1001,7 @@ each clamped layer.
 Essentially identical cost, better retention at every depth, and **one** intervention rather than
 four. By eight blocks the gap is 2×.
 
-> **The framing for the talk.** There are two ways to keep a physical variable under control. Either
+> There are two ways to keep a physical variable under control. Either
 > forcibly clamp a linear feature at every layer to fight the attention mechanism — the LLM
 > interpretability move, and it does work here — or make one edit at one layer that respects the
 > representation's geometry, which the network then sustains on its own. The second is not cheaper in
