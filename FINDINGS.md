@@ -16,7 +16,7 @@ pending · **[open]** not yet investigated.
 
 ---
 
-## F1. All three variables are strongly linearly decodable **[solid]**
+## F1. All three variables are strongly linearly decodable
 
 | variable | layer 0 | layer 1 | best layer | best | R² | tracker oracle |
 |---|---:|---:|:--:|---:|---:|---:|
@@ -34,7 +34,7 @@ signal — it sits ~2× off the tracker oracle on direction, ~5× on speed and a
 
 ---
 
-## F2. Direction is available from layer 1 — not at a mid-depth transition **[solid]**
+## F2. Direction is available from layer 1 — not at a mid-depth transition
 
 The paper reports direction emerging only at a sharp intermediate-depth transition (the
 "Physics Emergence Zone", ~⅓ depth). Here one attention block suffices: 66.9° → **11.4°**
@@ -57,32 +57,65 @@ independent of theta (also |r| < 0.07 in the metadata). So the layer-1 probe at 
 genuinely reading motion.
 
 **Interpretation:** most likely a dataset-simplicity effect — one high-contrast disk on
-an empty background, where motion is nearly readable off the first attention block. It is
-a real divergence from the paper and should be presented as one, with the simplicity
-caveat attached.
+an empty background, where motion is nearly readable off the first attention block. 
 
 ---
 
-## F3. Direction occupies ~2× the dimensions of speed and acceleration **[solid]**
+## F3. All three variables are equally redundant; direction's readout is 2-dimensional **[solid]**
 
-Iterative nullspace probing in the full 1024-d space. Dimensions removed before test R²
-falls below a fraction of its starting value:
+Iterative nullspace probing in the full 1024-d space: fit a probe, orthonormalise its readout,
+project that subspace out of every split, refit. The random-subspace control is what makes the
+curve mean anything — removing *any* directions eventually hurts a probe.
 
-| variable | R²₀ | 50 % at | 10 % at | fully exhausted | random control at same dims |
-|---|---:|---:|---:|---:|---:|
-| **direction** | 0.992 | **142** | **266** | 398 | **0.991** (flat) |
-| speed | 0.994 | **69** | **114** | 199 | 0.993 (flat) |
-| acceleration | 0.994 | **67** | **103** | 199 | 0.993 (flat) |
+| variable | R²₀ | dims to halve | **rounds to halve** | dims to 10 % | fully exhausted | random control |
+|---|---:|---:|---:|---:|---:|---:|
+| **direction** (sin, cos) | 0.992 | **142** | **71** | 266 | 398 | **0.991** (flat) |
+| speed | 0.994 | 69 | **69** | 114 | 199 | 0.993 (flat) |
+| acceleration | 0.994 | 67 | **67** | 103 | 199 | 0.993 (flat) |
 
-Circular MAE for direction runs 2.6° → **80°** (chance 90°) while the random control
-holds at 2.6° throughout. The separation is total.
+Circular MAE for direction runs 2.6° → **80°** (chance 90°) while the random control holds at
+2.6° throughout. **That separation is the finding**: probe-directed removal destroys the signal,
+removal of the same number of random directions does not. All three variables are carried by a
+highly redundant population code.
+
+### The dimension counts are not comparable across variables
+
+Each INLP round removes **one probe's readout subspace**, whose rank is set by the *target*, not
+by the representation: 2 for direction's (sin, cos), 1 for a scalar. So direction spends
+dimensions twice as fast per round purely as bookkeeping.
+
+**Rounds — the number of independent readouts extractable before the signal dies — are
+essentially equal: 71 / 69 / 67.**
+
+The decisive control: give direction a **1-dimensional** target on the same activations, layer
+and splits.
+
+| target | rank | dims to halve | rounds |
+|---|---:|---:|---:|
+| direction, sin θ alone | 1 | **76** | 76 |
+| direction, cos θ alone | 1 | **54** | 54 |
+| direction, (sin, cos) | 2 | 142 | 71 |
+| *speed* | 1 | *69* | *69* |
+| *acceleration* | 1 | *67* | *67* |
+
+A 1-d direction target costs **54–76** dimensions — squarely in the scalars' range. The 142 is
+71 rounds × 2 dims.
 
 **Evidence:** `E.nullspace_curve(ds, L, pooling='sal', n_iter=200)`;
-`artifacts/figures/nullspace_*.png`.
+`artifacts/figures/nullspace_combined.png`.
 
-**Reading:** this is the paper's central structural claim reproducing — direction is
-carried by a markedly higher-dimensional, more redundant population code than the scalar
-quantities. It is **not** a 2-dimensional (sin, cos) plane.
+### What can and cannot be claimed
+
+**Can:** all three variables are highly redundant, with probe-directed removal separating cleanly
+from the random control; direction's readout is inherently 2-dimensional, so controlling it
+costs twice the dimensions per readout.
+
+**Cannot:** "direction is twice as redundant" or "occupies twice the dimensions" as a statement
+about the *representation*. It is true of the dimension count and false of the redundancy.
+
+There is a **real** residual asymmetry, at the tail rather than the midpoint: reaching 10 % of
+the original R² takes 133 rounds for direction against 114 and 103 for the scalars — about
+1.2×, not 2×. Direction's signal persists slightly longer into the low-signal regime.
 
 The same run inside a PCA-reduced space (basis fitted on train rows only):
 
@@ -93,16 +126,10 @@ The same run inside a PCA-reduced space (basis fitted on train rows only):
 | PCA-128 | 22 / 50 | 13 / 20 | 11 / 18 |
 | full-1024 | 142 / 266 | 69 / 114 | 67 / 103 |
 
-The ~2× direction:scalar ratio is stable across every space, which is the robust part.
-The PCA-128 numbers (22 / 50) happen to land near the paper's reported "40–50 features",
-but that is a coincidence of basis size — **quote the full-space numbers.**
-
 > **Caveat:** in the reduced spaces the random control is *not* a valid comparison near
-> exhaustion (removing 126 of 128 random dims also destroys the probe: control R² 0.363).
-> The control is only meaningful while dims-removed ≪ space dimension, which is why the
-> full-1024 run is the headline.
-
----
+> exhaustion (removing 126 of 128 random dims also destroys the probe: control R² 0.363). The
+> control is only meaningful while dims-removed ≪ space dimension, which is why the full-1024
+> run is the headline.
 
 ## F4. The direction manifold is not a planar circle **[solid]**
 
@@ -953,6 +980,15 @@ with top-K selection.
 
 **C5. PCA for the reduced-space INLP is fitted on train rows only.** An earlier diagnostic
 SVD used all rows, which would have leaked held-out values into the basis.
+
+**C8. "Direction occupies 2× the dimensions" conflated readout rank with redundancy (fixed; reframed F3).**
+INLP removes `k` dimensions per round, where `k` is the rank of the probe's readout — 2 for a
+(sin, cos) target, 1 for a scalar. Reporting *dimensions removed* therefore built a factor of two
+into the comparison before any property of the representation was measured. Counting **rounds**
+instead gives 71 / 69 / 67 — essentially equal. Confirmed decisively by re-running direction with a
+1-d target (sin θ alone: 76 dims; cos θ alone: 54), which lands in the scalars' range. The random
+control and the redundancy claim are unaffected; only the cross-variable *ratio* was wrong. A real
+~1.2× asymmetry survives at the 10 % threshold.
 
 **C7. Circular MAE is degenerate when the readout collapses (fixed; strengthened F12).**
 Circular MAE takes `arctan2` of the predicted (sin, cos) pair. When an intervention drives

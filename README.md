@@ -37,8 +37,10 @@ variable can be steered.
   than location. This diverges from the paper and is most likely a dataset-simplicity effect.
 - A **tracker-only oracle** beats every encoder probe (1.19° / 0.011 / 0.036), bounding how
   much of the recoverable signal the representation actually keeps.
-- **Direction occupies ~2× the dimensions of either scalar** — 142 dimensions must be removed
-  to halve its probe R², against 69 and 67 — with a flat random-subspace control.
+- **All three variables are carried by a highly redundant population code**: probe-directed
+  removal drives R² from 0.99 to 0.01, while removing the same number of random directions
+  leaves it at 0.99. Counted in *independent readouts* the three are equal (71 / 69 / 67 rounds);
+  direction costs twice the *dimensions* only because its (sin, cos) readout is rank 2.
 - Its centroids form a **Fourier ladder at m = 1, 2, 4**, where the m ≥ 2 components are
   180°-invariant: an *axis of motion* code, distinct from direction, which the network builds
   with depth (3.1 % at layer 0 → 23.2 % at layer 24).
