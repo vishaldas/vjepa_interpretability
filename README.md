@@ -57,8 +57,9 @@ variable can be steered.
   all three variables, but only direction breaks. What separates them is **topology, not
   curvature**: direction's ring is closed, so a chord must cross an interior that corresponds
   to no direction at all.
-- At that midpoint the model holds a **structured, physically impossible state** — speed
-  intact (2.10 → 2.17 m/s), axis intact (5.9° error), direction annihilated (certainty 0.18).
+- At that midpoint the model holds a **structured, physically impossible state** — axis intact
+  (5.9° error), speed degraded but retained (per-clip error 2.2× its baseline, still 0.14 m/s on
+  a 0.25–4.0 range), direction annihilated (certainty 0.18, i.e. zero information).
 - The edit is **not erased downstream but rotated**: 69 % of its magnitude survives four
   blocks while only 32 % of its readout-aligned component does. **Attention accounts for 77 %**
   of the decay; LayerNorm is ruled out and the MLP contributes little.

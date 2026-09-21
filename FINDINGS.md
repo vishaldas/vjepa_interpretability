@@ -723,15 +723,23 @@ Run on the `speed` dataset, where theta and speed are decorrelated (|r| = 0.001)
 speed probe is clean. Errors are measured against the **source** clip's own angle;
 direction is mod 360° (chance 90°), axis is mod 180° (chance 45°).
 
-| state | direction (m=1) certainty / err | **axis (m=2)** certainty / err | speed read |
+| state | direction (m=1) certainty / err | **axis (m=2)** certainty / err | speed: mean / per-clip err |
 |---|---:|---:|---:|
-| unsteered (t=0) | 0.981 / 3.2° | 0.973 / 3.7° | 2.104 m/s |
-| **linear t=0.5** | **0.181 / 75.8°** | **0.914 / 5.9°** | **2.136 m/s** |
+| unsteered (t=0) | 0.981 / 3.2° | 0.973 / 3.7° | 2.104 m/s / **0.071** |
+| **linear t=0.5** | **0.181 / 75.8°** | **0.914 / 5.9°** | **2.136 m/s / 0.136** |
+| linear t=1.0 *(not the ghost state — direction is restored)* | 0.984 / — | 0.980 / — | 2.167 m/s / 0.258 |
 
-**Speed survives untouched** (2.104 → 2.136; population mean 2.12, and per-clip error stays
-near the probe's own baseline). So this is the *paradox* outcome, not the tidy
-"left + right = stationary" one — the centre of the direction ring is **not** the
-zero-speed state.
+The speed probe's own baseline error is **0.062**, so per-clip speed error runs
+**1.1× → 2.2× → 4.1×** along the chord.
+
+**Speed is degraded but retained; direction is annihilated.** The population *mean* barely
+moves (2.104 → 2.136 at the midpoint), but per-clip error roughly doubles — from 1.1× to
+**2.2×** the probe's own baseline. That is a real cost, and it is nothing like what happens to
+direction, whose readout falls to **zero information**. At 2.2× the speed error is still
+0.136 m/s on a 0.25–4.0 m/s range, so the state plainly still encodes a speed.
+
+So this is the *paradox* outcome, not the tidy "left + right = stationary" one — the centre of
+the direction ring is **not** the zero-speed state.
 
 **And the axis survives too, at full strength.** The state is not vaguely incoherent: it
 encodes *"an object moving along this specific line, at 2.1 m/s, with no fact about which
@@ -744,7 +752,8 @@ This follows exactly from the harmonic structure of F13, and is its sharpest con
   m=1 components and the midpoint has **zero** — certainty collapses;
 - m=2 is **invariant** under the flip, so both endpoints carry the *same* axis component
   and it is preserved along the entire chord — 5.9° error against the source angle;
-- speed lives in neither harmonic and rides along in the residual, untouched.
+- speed lives in neither harmonic and rides along in the residual — degraded by the edit, but
+  never annihilated the way an exactly-cancelling harmonic is.
 
 It also explains F12's inverted-U directly: t = 0.5 is where m=1 cancellation is exactly
 complete, which is why the collapse bottoms out there and recovers on either side.
@@ -1134,6 +1143,18 @@ with top-K selection.
 
 **C5. PCA for the reduced-space INLP is fitted on train rows only.** An earlier diagnostic
 SVD used all rows, which would have leaked held-out values into the basis.
+
+**C9. "Speed untouched" overstated the result, and two documents quoted the wrong endpoint (fixed).**
+The claim rested on the population *mean*, which is flat along the whole chord (2.10 → 2.17 m/s).
+Per-clip error is not: it runs 0.071 → 0.136 → 0.258, i.e. **1.1× → 2.2× → 4.1×** the speed
+probe's own baseline of 0.062. Speed is *degraded but retained*, not untouched — still a sharp
+contrast with direction reaching zero information, but a different claim. Separately, README and
+the deck quoted **2.10 → 2.17**, the t=0 → t=**1** pair, alongside the midpoint's direction
+collapse — but at t=1 direction is *restored* (certainty 0.984), so two different points on the
+path were being presented as one state. FINDINGS had the correct pair throughout. The figure now
+plots per-clip error rather than the flat mean, and the speed badge reads DEGRADED past the
+midpoint; calling it NULL would have been the opposite error, since 0.26 m/s on a 0.25–4.0 range
+is still informative.
 
 **C8. "Direction occupies 2× the dimensions" conflated readout rank with redundancy (fixed; reframed F3).**
 INLP removes `k` dimensions per round, where `k` is the rank of the probe's readout — 2 for a

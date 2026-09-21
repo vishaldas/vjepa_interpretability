@@ -298,7 +298,7 @@ def plot_ghost_state(d: dict, fname="ghost_state"):
     spd = np.array(d["spd_read"])
     marks = [0.0, 0.25, 0.5, 0.75, 1.0]
     at = lambda arr, m: arr[int(np.argmin(abs(t - m)))]
-    XLIM = (-0.04, 1.04)
+    XLIM = (-0.05, 1.09)
 
     fig = plt.figure(figsize=(13.5, 7.4))
     gs = fig.add_gridspec(2, 1, height_ratios=[1.0, 1.05], hspace=0.30,
@@ -310,7 +310,15 @@ def plot_ghost_state(d: dict, fname="ghost_state"):
     def status(v):
         return ("OK", OK) if v > 0.6 else (("WEAK", WEAK) if v > 0.3 else ("NULL", NULL))
 
-    tracks = [("SPEED", None), ("AXIS  (m = 2)", axc), ("DIRECTION  (m = 1)", dirc)]
+    # Speed is scored on its per-clip error against the probe's own baseline, not on a
+    # certainty scale: OK below 2x, DEGRADED above. It never reaches NULL, because even
+    # at 4.1x the error is 0.26 m/s on a 0.25-4.0 range -- still clearly informative,
+    # unlike direction, which reaches literally zero information. Reporting only the flat
+    # population MEAN would oversell it; calling it NULL would undersell it.
+    err = np.array(d["spd_err"]); base = d["base_spd"]
+    spd_lab = [("OK", OK) if err[int(np.argmin(abs(t - m)))] / base < 2.0
+               else ("DEGRADED", WEAK) for m in marks]
+    tracks = [("SPEED", spd_lab), ("AXIS  (m = 2)", axc), ("DIRECTION  (m = 1)", dirc)]
 
     ax0.set_xlim(*XLIM)
     ax0.set_ylim(-0.95, 3.5)
@@ -320,17 +328,17 @@ def plot_ghost_state(d: dict, fname="ghost_state"):
         ax0.text(-0.07, y, name, ha="right", va="center", fontsize=11.5,
                  weight="bold", clip_on=False)
         ax0.plot([0, 1], [y, y], color="0.88", lw=2, zorder=0)
-        for m in marks:
-            lab, col = ("OK", OK) if arr is None else status(at(arr, m))
-            ax0.add_patch(FancyBboxPatch((m - 0.055, y - 0.20), 0.110, 0.40,
+        for mi, m in enumerate(marks):
+            lab, col = arr[mi] if isinstance(arr, list) else status(at(arr, m))
+            ax0.add_patch(FancyBboxPatch((m - 0.062, y - 0.20), 0.124, 0.40,
                                          boxstyle="round,pad=0.014", linewidth=0,
                                          facecolor=col, zorder=2))
             ax0.text(m, y, lab, ha="center", va="center", color="white",
-                     fontsize=10, weight="bold", zorder=3)
+                     fontsize=9 if len(lab) > 4 else 10, weight="bold", zorder=3)
     for m in marks:
         ax0.text(m, -0.62, f"t = {m:g}", ha="center", fontsize=10.5)
     ax0.axvspan(0.435, 0.565, ymin=0.10, ymax=0.80, color=NULL, alpha=0.08, zorder=0)
-    ax0.annotate("GHOST  STATE\nspeed and axis intact — direction annihilated",
+    ax0.annotate("GHOST  STATE\naxis intact, speed degraded — direction annihilated",
                  xy=(0.5, 3.08), ha="center", va="center", fontsize=12, weight="bold",
                  color=NULL,
                  bbox=dict(boxstyle="round,pad=0.5", fc="#fdf0ee", ec=NULL, lw=1.5))
@@ -354,12 +362,15 @@ def plot_ghost_state(d: dict, fname="ghost_state"):
     ax1.grid(alpha=.25)
 
     ax2 = ax1.twinx()
-    ax2.plot(t, spd, "s--", color="tab:blue", lw=1.7, ms=4.5, label="speed readout")
-    ax2.set_ylim(0, 4.55)
-    ax2.set_ylabel("speed readout (m/s)", color="tab:blue")
+    ax2.plot(t, err / base, "s--", color="tab:blue", lw=1.7, ms=4.5,
+             label="speed error ÷ its own baseline")
+    ax2.axhline(1.0, color="tab:blue", lw=.9, ls=":")
+    ax2.set_ylim(0, 6.2)
+    ax2.set_ylabel("speed error ÷ baseline", color="tab:blue")
     ax2.tick_params(axis="y", labelcolor="tab:blue")
     ax2.legend(loc="upper right", fontsize=9.5, frameon=False)
-    ax2.text(0.5, 2.55, f"speed flat: {spd[0]:.2f} → {spd[-1]:.2f} m/s   "
-                        f"(label range 0.25 – 4.0)",
-             ha="center", fontsize=9.5, color="tab:blue")
+    ax2.text(0.5, 5.4, f"speed MEAN is flat ({spd[0]:.2f} → {spd[-1]:.2f} m/s) but per-clip "
+                       f"error is not: {err[0]/base:.1f}× → {err[len(err)//2]/base:.1f}× → "
+                       f"{err[-1]/base:.1f}×",
+             ha="center", fontsize=9, color="tab:blue")
     return save(fig, fname)
