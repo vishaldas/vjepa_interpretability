@@ -234,7 +234,7 @@ Report stratified, not aggregate.
 
 ---
 
-## F8. Steering direction needs a *multi*-probe subspace; the scalars do not **[solid]**
+## F8. Steering direction needs a *multi*-probe subspace; the scalars do not
 
 Multi-probe subspace steering at the selected layer, evaluated with a **held-out probe**
 (never one of the K that built the basis, and fitted on disjoint clips) on **held-out
@@ -260,11 +260,11 @@ K probes, M = 2K for direction, K for a scalar) with intercept `b`, so a probe r
 
 > **minimise ‖Δx‖₂²  subject to  W(x + Δx) + b = y_target**
 
-and returns `x* = x + Δx`. **Yes — this is the Moore–Penrose solution**
+and returns `x* = x + Δx`. **This is the Moore–Penrose solution**
 
 > **Δx = W⁺ ( y_target − (Wx + b) )**
 
-*Verified, not assumed.* The code does not compute `W⁺` directly: it forms an orthonormal
+The code does not compute `W⁺` directly: it forms an orthonormal
 basis `V = QR([W₁ᵀ … W_Kᵀ])`, splits `x = VVᵀx + x_⊥`, and least-squares-solves
 `(VᵀW ᵀ)ᵀ c* = y − b − Wᵀx_⊥` before recomposing `x* = Vc* + x_⊥`. That is the paper's
 construction, and it is *algebraically* the pseudo-inverse whenever the stacked readouts
@@ -293,7 +293,7 @@ is free to cut straight across the manifold, and on a closed geometry the shorte
 passes through the ring's interior. F11 quantifies that shortcut (80–120× off-manifold),
 F12 shows it lands in a semantically empty region, and F15 shows the resulting edit is the
 one attention discards (25 % retained vs 76 % for the on-manifold edit). **The failure mode
-is not a bug in the solver — it is exactly what minimising the wrong norm buys you.**
+is not a bug in the solver — it is exactly what minimising the wrong norm means.**
 
 **Evidence:** `vjp/steering.py`; `artifacts/figures/steering_*.png`.
 
@@ -315,6 +315,52 @@ target within the basis subspace.*
 *Accuracy degrades past K ≈ 8 for the scalars because the training clips are split K+1
 ways — at K=32 each probe sees ~36 clips for a 1024-d ridge. That is a data limit of this
 dataset, not a property of the representation.*
+
+### F8c. Steering rotates the representation — it does not inject noise **[solid]**
+
+The control that separates "the intervention changed the encoding" from "the intervention
+found an adversarial direction that fools the probe": as the error to the **target** angle
+falls, the error to each clip's **own** angle must rise by the same amount, and the readout
+must stay confident.
+
+| K | MAE → target | MAE → own label | certainty |
+|---:|---:|---:|---:|
+| unsteered | 80.7° | **4.6°** | 0.934 |
+| 1 | 61.4° | 23.4° | 0.699 |
+| 2 | 10.7° | 74.3° | 0.825 |
+| 4 | 6.1° | 80.3° | 0.928 |
+| 16 | 5.3° | 82.4° | 0.951 |
+| **32** | **4.8°** | **83.2°** | 0.928 |
+
+The two curves cross cleanly and **certainty holds at ~0.93 throughout**. Noise injection
+would drive certainty toward 0 — as it does in F12b, where an off-manifold state collapses to
+0.18. The same trade-off holds for speed (0.74 → 1.06) and acceleration (1.95 → 3.26).
+
+**Evidence:** `evaluate_steering` now records `steered_vs_own_label` and `certainty`;
+`artifacts/figures/steering_combined.png`.
+
+### Reproduction scorecard against Joseph et al.
+
+| their result | ours | verdict |
+|---|---|---|
+| Coordinated steering succeeds — 20 probes → 11.9° from an 82.9° baseline | K=16 → **5.3°**, K=32 → **4.8°**, from an 84.0° floor | ✅ reproduced, somewhat stronger |
+| True representation shift — error to ground truth rises 6° → ~71° as target error falls | **4.6° → 83.2°** | ✅ reproduced |
+| Single-probe steering fails — MAE stays **> 80°**, essentially unchanged | K=1 → **61.4°**, i.e. 28 % of the gap closed | ⚠️ **partial** |
+
+**On the single-probe claim.** The ordering reproduces emphatically — one probe closes 28 % of
+the gap for direction against 74 % for either scalar — but in our data a single probe *does*
+move the representation, where the paper reports essentially no change. Most plausibly the
+same dataset-simplicity effect behind F2 (direction readable at layer 1): one high-contrast
+disk on an empty field is a far easier stimulus.
+
+**On their takeaway.** They frame motion direction as a *uniquely* high-dimensional population
+code, unlike LLM concepts steerable along a single 1-D vector. Our data supports the **steering**
+half of that: direction needs K ≥ 2 while either scalar is steerable at K = 1. It does **not**
+support the uniqueness: per F3, speed and acceleration require 69 and 67 independent readouts
+against direction's 71 — all three are high-dimensional population codes. What actually
+distinguishes direction is that its readout is **2-dimensional and cyclic**, which is why one
+probe cannot drive it and why a chord through the ring lands in a semantically empty region
+(F12). That is a sharper claim than the paper's, and it is the one this data licenses.
 
 ### F8b. Cross-variable leakage grows with the steering subspace **[solid]**
 

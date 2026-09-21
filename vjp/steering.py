@@ -75,6 +75,11 @@ def evaluate_steering(dataset, X, Y, values, train, val, test, n_probes,
 
     pred = evp.predict(Xs)
     out = P.evaluate(dataset, pred, P.to_target(dataset, tgt), tgt)
+    # Does the intervention ROTATE the representation, or just inject noise that
+    # happens to satisfy the probe? If it genuinely rotates, error to the target
+    # falls while error to each clip's OWN label rises by the same amount, and the
+    # readout stays confident. Noise injection would collapse certainty instead.
+    away = P.evaluate(dataset, pred, P.to_target(dataset, values[src]), values[src])
     # How well did the probe read the ORIGINAL clips? Steering cannot beat this.
     base = P.evaluate(dataset, evp.predict(X[src]), P.to_target(dataset, values[src]),
                       values[src])
@@ -88,6 +93,9 @@ def evaluate_steering(dataset, X, Y, values, train, val, test, n_probes,
         "unsteered_vs_target": null,   # chance-level floor
         "n_eval": int(len(src)),
         "basis_residual": resid,
+        "steered_vs_own_label": away,
+        "certainty": float(np.linalg.norm(pred, axis=1).mean())
+                     if dataset == "direction" else float(np.std(pred[:, 0])),
     }
 
 
