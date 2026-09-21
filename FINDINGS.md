@@ -61,7 +61,7 @@ an empty background, where motion is nearly readable off the first attention blo
 
 ---
 
-## F3. All three variables are equally redundant; direction's readout is 2-dimensional **[solid]**
+## F3. All three variables are equally redundant; direction's readout is 2-dimensional
 
 Iterative nullspace probing in the full 1024-d space: fit a probe, orthonormalise its readout,
 project that subspace out of every split, refit. The random-subspace control is what makes the
@@ -193,7 +193,7 @@ where object identity stays spatially localised.
 
 ---
 
-## F6. The tracker-only model is an oracle ceiling, and it invalidates `obj` pooling **[solid]**
+## F6. The tracker-only model is an oracle ceiling, and it invalidates `obj` pooling
 
 A probe on the disk trajectory with **no encoder features at all** (given the nonlinear
 terms a linear probe cannot form for itself: displacement magnitudes, their differences,
