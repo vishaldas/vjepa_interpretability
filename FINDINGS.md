@@ -26,7 +26,16 @@ pending · **[open]** not yet investigated.
 
 Chance for direction is 90°. Layer 0 is the raw patch embedding (no attention).
 
-**Evidence:** `run_part1.py`; `artifacts/figures/layer_sweep_*.png`.
+**Evidence:** `run_part1.py`; `artifacts/figures/layer_sweep_all.png` (all three on one
+axis set) and `layer_sweep_<variable>.png` (per variable, R² and native metric, three
+poolings).
+
+> **On "where each variable becomes available":** R² is a poor threshold here — it clears
+> 0.95 at layer 1 for both scalars and layer 4 for direction, then saturates while real
+> improvement continues (direction still carries ~2× its eventual error at layer 4). On the
+> native metric, the scalars are within 2× of their best at **layer 1** and direction at
+> **layer 4**; within 1.2× at layers **11 / 11 / 13**. Same ordering, but it says where each
+> variable is genuinely finished.
 
 **Reading:** performance rises steeply from layer 0→1, then improves gradually and
 plateaus in the middle third. The encoder retains most but not all of the recoverable
@@ -747,8 +756,20 @@ complete, which is why the collapse bottoms out there and recovers on either sid
 > No real clip can be in it, which is precisely why the ring's interior is semantically
 > empty (F12) and why the resulting edit is what attention discards (F15).
 
-**Speed** (edit L14, read L15) — the control, circular MAE (certainty never collapses
-here, so the metric is safe):
+**The open-manifold controls** — three of them now, and none shows a penalty. Certainty never
+collapses for a scalar, so MAE is safe here:
+
+| control | manifold | linear | penalty |
+|---|---:|---:|---:|
+| speed, edit L14 → read L15 | 0.223 | **0.204** | 0.92× |
+| speed, edit L14 → read L16 *(2 blocks)* | 0.297 | **0.282** | 0.95× |
+| acceleration, edit L14 → read L15 | 0.601 | **0.581** | 0.97× |
+
+Linear steering is marginally *better* in all three. The effect is specific to direction, holds
+one and two blocks downstream, and holds for both scalars — so it is not an artefact of a single
+layer pair or a single variable.
+
+Per-t detail for the first control:
 
 | t | manifold err | linear err |
 |---|---:|---:|
@@ -1085,7 +1106,8 @@ residuals are now ~1e-15 and an assertion enforces it.
 - **Deeper propagation for the path experiment.** F12 reads one block downstream; F9
   showed the linear effect decays to 15 % by four blocks. Whether the manifold advantage
   *widens* with depth is the natural follow-up and needs no new machinery.
-- **Acceleration path experiment** not yet run (open manifold, so F12 predicts no effect).
+- **Deeper open-manifold controls.** Run to two blocks; whether the null result holds at four
+  is untested, though F12's mechanism predicts it should.
 - **Deeper propagation.** F17 now reaches L24 (+8 blocks), where the spline still leads 2×.
   Whether that holds to the final layer is a direct extension.
 - **Clamping the spline.** F17 clamps only the linear subspace. Clamping the on-manifold target at
