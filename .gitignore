@@ -27,5 +27,13 @@ hf_token*
 *.pem
 *.key
 
+# ---- supplied material — kept locally, never committed ----
+# The clips, the task statement and the dataset reference belong to World
+# Mechanics. They stay on disk so the pipeline runs without re-downloading,
+# but they are not redistributed here. See the README for where to get them.
+data/
+TASK.md
+DATA.md
+
 # ---- macOS ----
 .DS_Store

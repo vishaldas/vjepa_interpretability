@@ -3,7 +3,7 @@
 A study of how a frozen **V-JEPA 2 ViT-L/16-256** encoder represents the direction, speed
 and acceleration of a moving object — and of what that structure implies for steering it.
 
-Response to the World Mechanics take-home ([TASK.md](TASK.md)).
+Response to the World Mechanics take-home ([task and data](https://anonymous.4open.science/r/vjepa-physics-takehome-4E00/README.md)).
 Part 1 reproduces the probing / nullspace / steering progression from Joseph et al.;
 Part 2 extends it with spline-based manifold steering after Wurgaft et al., plus a
 mechanistic account of *why* linear steering fails and a comparison against continuous
@@ -81,6 +81,11 @@ variable can be steered.
 
 Tested on an Apple M2 Max (32 GB) using the PyTorch **MPS** backend; no CUDA GPU required.
 
+**The clips are not in this repository.** They belong to World Mechanics and are
+distributed by them at **[https://anonymous.4open.science/r/vjepa-physics-takehome-4E00/README.md](https://anonymous.4open.science/r/vjepa-physics-takehome-4E00/README.md)**. Download `data/` from there into the
+repository root — the layout is `data/<variable>/{manifest.jsonl, videos/}`, exactly as
+supplied — then:
+
 ```bash
 python -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python -m vjp.extract          # one-time, ~26 min, writes a 5.4 GB cache
@@ -136,7 +141,7 @@ vjp/            library
   figures.py      all plots
 run_*.py        entry points, one per experiment
 artifacts/      figures (28) and the presentation deck
-data/           the supplied clips — unmodified
+data/           the supplied clips — not committed; see Reproducing
 ```
 
 Derived caches, memoised results and the virtual environment are excluded from version

@@ -72,7 +72,7 @@ exactly 256×256, so we bypass it and feed frames directly.
 
 ## Data facts
 
-- **The disk is orange, not blue** (DATA.md says blue).
+- **The disk is orange, not blue** (the supplied dataset reference says blue).
 - Constant apparent area ~335 px (⌀ ≈ 20.6 px ≈ 1.3 patches). **Never leaves the frame**
   at any speed — no occlusion or scale confound.
 - Scale: **~20 px total displacement per m/s** over the 16 frames (≈1.33 px/frame per m/s).

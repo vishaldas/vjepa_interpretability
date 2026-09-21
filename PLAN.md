@@ -111,7 +111,7 @@ acceleration  1536 clips   64 magnitudes × 24 reps   0.25 – 10.0 m/s²  speed
 **Verified properties:**
 - Nuisance variables are decorrelated from targets (|r| < 0.07 for theta, start position).
   The dataset is cleanly designed — say so, it justifies simple probes.
-- The disk is **orange**, not blue as DATA.md claims. Constant apparent area (~335 px,
+- The disk is **orange**, not blue as the supplied dataset reference claims. Constant apparent area (~335 px,
   ⌀≈20 px ≈ 1.3 patches). **Never leaves the frame** at any speed — no occlusion or
   scale confound.
 - Scale: total displacement over 16 frames ≈ **20 px per m/s**. So 1 m/s ≈ 1.33 px/frame.
@@ -135,7 +135,7 @@ invariance to acceleration within either one.
 
 ## 4. The evaluation protocol — three independent held-out axes
 
-This is what DATA.md means by "a fair test of generalization", and getting it wrong
+This is what the supplied dataset reference means by "a fair test of generalization", and getting it wrong
 silently invalidates both parts.
 
 The data is **64 discrete values × 24 reps**. A random clip split puts magnitude=2.15 in
