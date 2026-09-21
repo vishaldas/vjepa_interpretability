@@ -15,7 +15,8 @@ feature clamping.
 
 | | |
 |---|---|
-| **[FINDINGS.md](FINDINGS.md)** | 18 findings, each with its evidence table, the command that reproduces it, and a status marker. **Includes a log of ten corrections** — errors found and fixed, several of which reversed a headline result. |
+| **[FINDINGS.md](FINDINGS.md)** | 18 findings, each with its evidence table, the command that reproduces it, and a status marker. |
+| **[CORRECTIONS.md](CORRECTIONS.md)** | Ten errors found and fixed during the work — four of which changed a published result. Kept deliberately: the path to a number is part of the evidence for it. |
 | **[artifacts/deck/](artifacts/deck/)** | The presentation (`.pptx`, 12 slides incl. one backup), with speaker notes. |
 | **[notes/SETUP_FINDINGS.md](notes/SETUP_FINDINGS.md)** | Everything measured about the model and data rather than assumed. |
 | **[notes/CACHE.md](notes/CACHE.md)** | Feature cache layout and the train/val/test protocol. |
@@ -41,7 +42,7 @@ variable can be steered.
   removal drives R² from 0.99 to 0.01, while removing the same number of random directions
   leaves it at 0.99. Counted in *independent readouts* the three are equal (71 / 69 / 67 rounds);
   direction costs twice the *dimensions* only because its (sin, cos) readout is rank 2.
-- Its centroids form a **Fourier ladder at m = 1, 2, 4**, where the m ≥ 2 components are
+- Direction's centroids form a **Fourier ladder at m = 1, 2, 4**, where the m ≥ 2 components are
   180°-invariant: an *axis of motion* code, distinct from direction, which the network builds
   with depth (3.1 % at layer 0 → 23.2 % at layer 24).
 - Multi-probe subspace steering works, but **a single probe barely moves direction** (28 % of
@@ -51,9 +52,9 @@ variable can be steered.
 #### Part 2 — geometry, and why linear steering fails
 
 - The intervention solves `min ‖Δx‖₂ s.t. W(x+Δx)+b = y` — the **Moore-Penrose minimum-norm
-  edit**, verified against a direct pseudo-inverse to 3e−14. It is the smallest *Euclidean*
+  edit**, verified against a direct pseudo-inverse to 3.1e−14. It is the smallest *Euclidean*
   step, and Euclidean smallness is blind to where the data lies.
-- **Off-manifold does not imply off-behaviour.** Linear paths run 80–120× off manifold for
+- **Off-manifold does not imply off-behaviour.** Linear paths run 80–117× off manifold for
   all three variables, but only direction breaks. What separates them is **topology, not
   curvature**: direction's ring is closed, so a chord must cross an interior that corresponds
   to no direction at all.
@@ -70,7 +71,7 @@ variable can be steered.
   but needs four interventions to achieve less than one geometry-respecting edit.
 - **And it changes what the model forecasts.** Driving the shipped predictor after a layer-16
   edit, the on-manifold edit moves the forecast onto the target (81.4° → **14.4°**, 89 % of the
-  floor-to-ceiling gap) while the Euclidean edit barely moves it at all (76.4°, 7 %) — 38 % even
+  floor-to-ceiling gap) while the Euclidean edit barely moves it at all (76.4°, 6.6 %) — 38 % even
   when rescaled to the same perturbation norm. Satisfying a probe is not the same as steering a
   world model.
 
@@ -82,7 +83,7 @@ Tested on an Apple M2 Max (32 GB) using the PyTorch **MPS** backend; no CUDA GPU
 
 ```bash
 python -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/python -m vjp.extract          # one-time, ~28 min, writes a 5.4 GB cache
+.venv/bin/python -m vjp.extract          # one-time, ~26 min, writes a 5.4 GB cache
 ```
 
 Extraction runs the frozen encoder over all 4,572 clips and stores, for every clip and all
@@ -97,7 +98,13 @@ reads the cache:
 .venv/bin/python run_mechanism.py        # half-block diagnosis: where does it decay?
 .venv/bin/python run_open2.py            # multi-probe vs spline, propagated
 .venv/bin/python run_clamp.py            # clamping vs one-shot vs on-manifold
+.venv/bin/python run_behaviour.py        # does the PREDICTOR's forecast change?      (~12 min)
+.venv/bin/python run_open.py             # manifold vs linear path, propagated
 ```
+
+`run_part1.py` and `run_part2.py` cover the three task steps; the rest are the follow-up
+experiments. `run_behaviour.py` is the one that drives the predictor rather than reading an
+encoder probe.
 
 Experiment results are memoised by a hash of their full config, so re-running an analysis or
 redrawing a figure costs nothing. The cache is treated as immutable once written — MPS
@@ -115,10 +122,12 @@ vjp/            library
   features.py     the three pooling operators and the cache API
   extract.py      the single extraction pass
   experiments.py  split logic, layer sweeps, nullspace curves, memoisation
-  probes.py       ridge probes, circular targets, INLP, subspace steering
+  probes.py       ridge probes, circular targets, INLP, the steering solve
+  steering.py     probe banks, held-out-probe evaluation, leakage harness
   splines.py      periodic / open manifold fitting and steering
   part2.py        endpoint accuracy, path geometry, causal path test
   causal.py       forward-pass intervention through the live residual stream
+  behaviour.py    drives the predictor; reads its forecast rather than the encoder
   mechanism.py    half-block instrumentation and LayerNorm statistics
   clamp.py        continuous feature clamping
   leakage.py      cross-variable specificity
@@ -126,7 +135,7 @@ vjp/            library
   bootstrap.py    confidence tube around the fitted manifold
   figures.py      all plots
 run_*.py        entry points, one per experiment
-artifacts/      figures (25) and the presentation deck
+artifacts/      figures (28) and the presentation deck
 data/           the supplied clips — unmodified
 ```
 
@@ -161,18 +170,20 @@ its mask-only floor; the clamping arm against a subspace-size-matched baseline.
 
 ## Corrections
 
-[FINDINGS.md](FINDINGS.md) carries a log of ten errors caught during the work, kept
-deliberately rather than tidied away. Two changed headline results:
+**[CORRECTIONS.md](CORRECTIONS.md)** logs ten errors found during the work, kept deliberately
+rather than tidied away. Four changed a published result:
 
-- **INLP was silently stalling.** Once a direction had been projected out, its feature variance
-  sat on a numerical floor, the readout exploded along already-dead directions, and the
-  projection became a no-op while the dimension counter kept incrementing. Before the fix the
-  curve never bent and there was no dimensionality number; after it, direction decays cleanly
-  from R² 0.99 to 0.01 over 398 dimensions.
-- **Circular MAE is degenerate when a readout collapses.** It takes `arctan2` of a near-zero
-  vector, so the angle is noise — the same steered state scored 13° under one legitimately
-  fitted probe and 91° under another. All steering results now report *certainty* and
-  *alignment*, which are well behaved at zero.
+- **INLP was silently stalling** (C1) — the projection became a no-op while the dimension
+  counter kept incrementing, so the curve never bent and there was no dimensionality number.
+- **Speed steering appeared to fail** (C6) — the solve dropped a per-probe mean term, so the
+  basis probes missed their own target and steering looked like it got *worse* with more probes.
+- **The 2× dimension gap was readout rank, not redundancy** (C8) — INLP removes 2 dimensions
+  per round for a (sin, cos) target and 1 for a scalar, which built the factor of two into the
+  comparison before anything was measured.
+- **The forecast ceiling came from the wrong split** (C10) — leaving a stated ceiling that the
+  control arm beat.
+
+Two more, **C2** and **C7**, would have broken Part 2's headline comparison before it was run.
 
 ---
 

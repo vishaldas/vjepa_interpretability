@@ -10,7 +10,7 @@ MPS backend. It just isn't CUDA.
 | | per clip | full 4,572-clip pass |
 |---|---:|---:|
 | CPU fp32 | 2.84 s | ~3.6 h |
-| **MPS fp32** | **0.30 s** | **~23 min** |
+| **MPS fp32** | **0.30 s** | **~26 min** |
 | MPS fp16 | 0.26 s | ~19 min |
 
 We use **MPS + fp32**: only ~20 % slower than fp16 and numerically safer.

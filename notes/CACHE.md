@@ -5,7 +5,7 @@ Everything expensive is computed once and cached, so experiments are interactive
 ## One-time cost
 
 ```bash
-.venv/bin/python -m vjp.extract            # ~23 min on MPS, all 4,572 clips
+.venv/bin/python -m vjp.extract            # ~26 min on MPS, all 4,572 clips
 ```
 
 Idempotent: it skips datasets already cached (`--force` to redo). Checkpointing is
@@ -28,7 +28,7 @@ artifacts/
   figures/*.png
 ```
 
-Total ≈ 5.8 GB for 3 datasets × 3 poolings.
+Total ≈ 5.4 GB for 3 datasets × 3 poolings.
 
 **Layout is layer-major** — `arr[L]` is one contiguous ~25 MB read rather than a strided
 scan of the whole file, which is what every downstream experiment wants.
