@@ -3,7 +3,7 @@
 
 Four arms, same clips, same targets, same held-out readout probes:
   control     no edit
-  once        one Euclidean edit at L16          (F14 baseline)
+  once        one Euclidean edit at L16          (F11 baseline)
   reinject    the same edit re-added at L16..L19 (accumulates)
   clamp       per-block minimum-norm correction  (the LLM feature-clamping analogue)
   spline      one on-manifold edit at L16        (F15)

@@ -155,7 +155,7 @@ Not overfitting: at layer 16 in the full space, train R² 0.9976 vs test 0.9921.
 **Consequence for Part 2:** the periodic spline must be fitted in ~64-D PCA space, not
 2-D. A 2-D fit would be visually appealing and quantitatively wrong. This is the hinge
 between Part 1 and Part 2: *how many dimensions* (F3) → *what shape* (F4) → *can we drive
-it* (F8–F12).
+it* (F8–F14).
 
 ### F4b. The ring itself is low-dimensional; separating it from nuisance is not
 
@@ -299,8 +299,8 @@ than only by the equivalence argument.
 step* that satisfies K linear constraints. Euclidean smallness is measured in the ambient
 activation space, which knows nothing about where the data actually lives — so the solution
 is free to cut straight across the manifold, and on a closed geometry the shortest chord
-passes through the ring's interior. F11 quantifies that shortcut (80–120× off-manifold),
-F12 shows it lands in a semantically empty region, and F15 shows the resulting edit is the
+passes through the ring's interior. F13 quantifies that shortcut (80–120× off-manifold),
+F14 shows it lands in a semantically empty region, and F15 shows the resulting edit is the
 one attention discards (25 % retained vs 76 % for the on-manifold edit). **The failure mode
 is not a bug in the solver — it is exactly what minimising the wrong norm means.**
 
@@ -325,7 +325,7 @@ target within the basis subspace.*
 ways — at K=32 each probe sees ~36 clips for a 1024-d ridge. That is a data limit of this
 dataset, not a property of the representation.*
 
-### F8c. Steering rotates the representation — it does not inject noise
+### F8b. Steering rotates the representation — it does not inject noise
 
 The control that separates "the intervention changed the encoding" from "the intervention
 found an adversarial direction that fools the probe": as the error to the **target** angle
@@ -342,7 +342,7 @@ must stay confident.
 | **32** | **4.8°** | **83.2°** | 0.928 |
 
 The two curves cross cleanly and **certainty holds at ~0.93 throughout**. Noise injection
-would drive certainty toward 0 — as it does in F12b, where an off-manifold state collapses to
+would drive certainty toward 0 — as it does in F14b, where an off-manifold state collapses to
 0.18. The same trade-off holds for speed (0.74 → 1.06) and acceleration (1.95 → 3.26).
 
 **Evidence:** `evaluate_steering` now records `steered_vs_own_label` and `certainty`;
@@ -369,9 +369,9 @@ support the uniqueness: per F3, speed and acceleration require 69 and 67 indepen
 against direction's 71 — all three are high-dimensional population codes. What actually
 distinguishes direction is that its readout is **2-dimensional and cyclic**, which is why one
 probe cannot drive it and why a chord through the ring lands in a semantically empty region
-(F12). That is a sharper claim than the paper's, and it is the one this data licenses.
+(F14). That is a sharper claim than the paper's, and it is the one this data licenses.
 
-### F8b. Cross-variable leakage grows with the steering subspace
+### F8c. Cross-variable leakage grows with the steering subspace
 
 **The 3×3 matrix cannot be completed, and that is itself a finding about the data.**
 Speed and acceleration are **mutually exclusive in every supplied dataset** — no clip has
@@ -469,7 +469,7 @@ by <2° across layers, so the decay is not a probe-quality artefact.*
 
 ---
 
-## F13. The ring carries a Fourier ladder — but only m ∈ {1, 2, 4}, and it is an *axis* code
+## F10. The ring carries a Fourier ladder — but only m ∈ {1, 2, 4}, and it is an *axis* code
 
 The 64 directions are equally spaced, so a DFT of the centroids in θ reads the harmonic
 content off directly. Noise floor from splitting the ~24 reps per angle in half.
@@ -554,7 +554,7 @@ A closed periodic spline is still the right object, and now for a measured reaso
 than an assumed one: the centroid curve is a **genuine closed loop dominated by m=1 with a
 real m=2 component**, so it is a circle deformed into a 2-lobed figure — not a plane
 curve, and not something an open spline or a 2-D circle fit would capture. It also
-explains F12 directly: the m=2 component is what makes the interior of the ring
+explains F14 directly: the m=2 component is what makes the interior of the ring
 semantically empty, and hence why a chord through it collapses the readout.
 
 **Evidence:** DFT over the 64 equally spaced centroids at layer 16, `sal` pooling; noise
@@ -563,7 +563,7 @@ floor from half-split reps; pixel control from `tracks_direction.npz`.
 
 ---
 
-## F14. Why the network undoes it: attention rotates the edit out of the readout subspace
+## F11. Why the network undoes it: attention rotates the edit out of the readout subspace
 
 F9 showed a Euclidean edit at L16 decays to ~15 % effect by four blocks. Reading the
 residual stream at **half-block resolution** (pre-norm block: `in` → `attn` → `out`) with
@@ -633,11 +633,11 @@ training clips disjoint from the K=16 basis probes.
 
 ### What this means for Part 2
 
-F12 showed manifold steering survives mid-path where linear steering collapses. F14 says
+F14 showed manifold steering survives mid-path where linear steering collapses. F11 says
 the reason a Euclidean edit fails is that **attention rotates it out of the readout
 subspace**, not that any norm rejects it. The natural follow-up — not yet run — is whether
 the on-manifold edit's readout-aligned component decays more slowly through the same
-blocks. That would convert F12's behavioural result into a mechanistic one.
+blocks. That would convert F14's behavioural result into a mechanistic one.
 
 
 ---
@@ -649,7 +649,7 @@ PCA and the centroids both computed on **train values only**, so reaching a held
 value is genuine interpolation along the curve. Direction uses a **periodic** spline;
 speed and acceleration use open ones.
 
-## F10. Spline steering is *worse* than multi-probe at hitting a target
+## F12. Spline steering is *worse* than multi-probe at hitting a target
 
 Same held-out probe, same targets, same held-out values as F8:
 
@@ -665,9 +665,9 @@ Both beat the floor comfortably; multi-probe wins. Stable across `n_pca` ∈ {8 
 **This is expected, and it is not the claim being tested.** Multi-probe steering *solves*
 for the coordinates that make probe readouts equal the target — it optimises precisely the
 quantity being scored. The spline simply moves to the target value's centroid. Endpoint
-accuracy was never Wurgaft et al.'s claim; the path is (F11, F12).
+accuracy was never Wurgaft et al.'s claim; the path is (F13, F14).
 
-## F11. The linear path is 74–130× further off-manifold — for **all three** variables
+## F13. The linear path is 74–130× further off-manifold — for **all three** variables
 
 Mean distance from the interpolation path to the manifold, over 150 random value pairs,
 endpoints identical by construction:
@@ -680,10 +680,10 @@ endpoints identical by construction:
 
 > **Read this metric sceptically.** The manifold path lies on the manifold *by
 > construction*, so its energy is ~0 almost tautologically. What this shows is that the
-> chord genuinely leaves the data region — not yet that leaving it matters. F12 is the
+> chord genuinely leaves the data region — not yet that leaving it matters. F14 is the
 > test that does.
 
-## F12. Off-manifold does not imply off-behaviour — it depends on the topology
+## F14. Off-manifold does not imply off-behaviour — it depends on the topology
 
 The behavioural test: inject the edit into the live residual stream at a fraction `t`
 along each route, propagate, and read one block downstream. At t=0 and t=1 the two routes
@@ -716,7 +716,7 @@ the comparison isolates the route.
 > linear state at 13° and 91°. Certainty and alignment are well behaved at zero and are
 > used throughout. The corrected result is **much stronger** than the original.
 
-### F12b. What the off-manifold state actually *is*: axis and speed without direction
+### F14b. What the off-manifold state actually *is*: axis and speed without direction
 
 Reading other probes at that same t = 0.5 linear state settles what kind of state it is.
 Run on the `speed` dataset, where theta and speed are decorrelated (|r| = 0.001) so the
@@ -746,7 +746,7 @@ encodes *"an object moving along this specific line, at 2.1 m/s, with no fact ab
 of the two ways."* The direction bit has been surgically annihilated while everything else
 is intact.
 
-This follows exactly from the harmonic structure of F13, and is its sharpest confirmation:
+This follows exactly from the harmonic structure of F10, and is its sharpest confirmation:
 
 - m=1 is **anti**-symmetric under a 180° flip, so the two chord endpoints carry opposite
   m=1 components and the midpoint has **zero** — certainty collapses;
@@ -755,7 +755,7 @@ This follows exactly from the harmonic structure of F13, and is its sharpest con
 - speed lives in neither harmonic and rides along in the residual — degraded by the edit, but
   never annihilated the way an exactly-cancelling harmonic is.
 
-It also explains F12's inverted-U directly: t = 0.5 is where m=1 cancellation is exactly
+It also explains F14's inverted-U directly: t = 0.5 is where m=1 cancellation is exactly
 complete, which is why the collapse bottoms out there and recovers on either side.
 
 > **Why this matters for the "unnatural outputs" claim.** Wurgaft et al. argue that
@@ -763,7 +763,7 @@ complete, which is why the collapse bottoms out there and recovers on either sid
 > statement than "off-manifold": the state is not noise, it is **structured and physically
 > impossible** — a well-formed speed and a well-formed axis with the direction bit removed.
 > No real clip can be in it, which is precisely why the ring's interior is semantically
-> empty (F12) and why the resulting edit is what attention discards (F15).
+> empty (F14) and why the resulting edit is what attention discards (F15).
 
 **The open-manifold controls** — three of them now, and none shows a penalty. Certainty never
 collapses for a scalar, so MAE is safe here:
@@ -795,7 +795,7 @@ Per-t detail for the first control:
 The obvious explanation — "direction's manifold is more curved" — **does not survive
 measurement**. Arclength/chord is 6.59 for direction but also **4.68 for speed** and 4.81
 for acceleration. All three are strongly curved; all three have linear paths ~80–120× off
-manifold (F11). Yet the behavioural penalty appears **only for direction**.
+manifold (F13). Yet the behavioural penalty appears **only for direction**.
 
 What distinguishes direction is **topology, not curvature**. Its manifold is a *closed
 loop*, so a chord must cross the ring's interior — a region that corresponds to no
@@ -807,7 +807,7 @@ So: **off-manifold energy is necessary but not sufficient for behavioural degrad
 What matters is whether the off-manifold region is semantically empty.** Manifold steering
 is worth its cost for variables with closed or otherwise non-convex geometry, and buys
 essentially nothing for monotone scalars — where the simpler, more accurate multi-probe
-method (F10) is strictly preferable.
+method (F12) is strictly preferable.
 
 ## Comparing the two methods
 
@@ -826,7 +826,7 @@ method (F10) is strictly preferable.
 
 ## F15. The on-manifold edit survives propagation 3× better
 
-The open question left by F14: a Euclidean edit gets rotated out of the readout subspace by
+The open question left by F11: a Euclidean edit gets rotated out of the readout subspace by
 attention — does an *on-manifold* edit resist that? Both methods steered to the **same
 held-out target values**, injected at L16, propagated through the same blocks, scored with
 the same non-degenerate metric.
@@ -862,9 +862,9 @@ The sharpest statement available: hand the Euclidean edit **three times the init
 spline four blocks later — +0.686 against +0.783. What survives is not the size of the edit but
 whether it points somewhere the network maintains.
 
-### This reverses the verdict of F10
+### This reverses the verdict of F12
 
-F10 found spline steering *worse* at hitting the target (7.02° vs 5.32°) — measured in
+F12 found spline steering *worse* at hitting the target (7.02° vs 5.32°) — measured in
 feature space, at the layer of the intervention. F15 measures the same two edits four
 blocks later, where the model is actually computing, and the ordering flips hard:
 
@@ -885,13 +885,13 @@ network's own geometry moves it.
 
 Its alignment is **+0.024 at the injection point** — it never carried direction information
 at all. Attention is not destroying anything there; the chord midpoint simply lands in the
-ring's interior, which is semantically empty (F12). So there are two distinct failure
-modes, and F14 and F12 describe different ones:
+ring's interior, which is semantically empty (F14). So there are two distinct failure
+modes, and F11 and F14 describe different ones:
 
 | | starts aligned? | survives? | mechanism |
 |---|---|---|---|
-| multi-probe (Euclidean, valid target) | yes (+1.33) | no — 25 % | **attention rotates it out** (F14) |
-| linear chord (t=0.5) | **no** (+0.02) | n/a | lands in a semantically empty region (F12) |
+| multi-probe (Euclidean, valid target) | yes (+1.33) | no — 25 % | **attention rotates it out** (F11) |
+| linear chord (t=0.5) | **no** (+0.02) | n/a | lands in a semantically empty region (F14) |
 | spline (on-manifold) | yes (+1.03) | **yes — 76 %** | moves along directions the network maintains |
 
 This is the strongest statement the project supports for Wurgaft et al.'s thesis: geometry
@@ -960,7 +960,7 @@ percentile** of the real clip-to-clip nearest-neighbour distribution (median 10.
 
 **Licensed:** the chord midpoint occupies a region of activation space that **no training clip
 occupies**, at 0.32× the radius of the closest one, 2.2 standard deviations of the radial spread
-below the nearest real data. Combined with F12b — speed and axis intact, direction annihilated —
+below the nearest real data. Combined with F14b — speed and axis intact, direction annihilated —
 the state is not a noisy variant of a real state. It is structurally distinct.
 
 **Not licensed:** "it is far outside the manifold's confidence tube." It is 2.4× outside, which is
@@ -977,7 +977,7 @@ Lead with the **radial shell** result (0 of 1,148), not the tube.
 ## F17. Continuous feature clamping transfers to a world model — and a single on-manifold edit beats it
 
 Borrowed directly from LLM interpretability: rather than asking a one-shot edit to survive, assert
-the feature at **every** block. F14 said attention rotates a Euclidean edit out of the readout
+the feature at **every** block. F11 said attention rotates a Euclidean edit out of the readout
 subspace; this stops asking it to survive and re-asserts it at blocks 16–19.
 
 Two things get conflated, and only the second is clamping:
@@ -991,7 +991,7 @@ Alignment with the intended direction, held-out clips and held-out targets:
 | arm | L17 (+1) | L18 (+2) | **L20 (+4)** | L24 (+8) | Σ‖Δ‖ per clip |
 |---|---:|---:|---:|---:|---:|
 | no edit (control) | +0.12 | +0.11 | +0.12 | +0.11 | 0 |
-| one-shot Euclidean (F14) | +0.89 | +0.66 | **+0.36** | +0.22 | 8.5 |
+| one-shot Euclidean (F11) | +0.89 | +0.66 | **+0.36** | +0.22 | 8.5 |
 | re-inject same Δx ×4 | +0.89 | **+1.30** | **+1.29** | +0.60 | **33.9** |
 | **clamp K=16 across 16–19** | +0.89 | +0.89 | **+0.79** | +0.35 | 20.2 |
 | clamp K=1 across 16–19 | +0.33 | +0.68 | +0.54 | +0.22 | 7.5 |
@@ -1004,7 +1004,7 @@ Alignment with the intended direction, held-out clips and held-out targets:
 At four blocks downstream, clamping more than **doubles** the retained effect over the one-shot edit
 (+0.79 vs +0.36). The technique transfers from language models to a video world model without
 modification: repeatedly asserting a linear feature does hold it in place against the attention
-rotation of F14.
+rotation of F11.
 
 ### Re-injection is not the same thing, and it overshoots
 
@@ -1165,14 +1165,14 @@ instead gives 71 / 69 / 67 — essentially equal. Confirmed decisively by re-run
 control and the redundancy claim are unaffected; only the cross-variable *ratio* was wrong. A real
 ~1.2× asymmetry survives at the 10 % threshold.
 
-**C7. Circular MAE is degenerate when the readout collapses (fixed; strengthened F12).**
+**C7. Circular MAE is degenerate when the readout collapses (fixed; strengthened F14).**
 Circular MAE takes `arctan2` of the predicted (sin, cos) pair. When an intervention drives
 the readout toward zero norm, that angle is noise and the metric is arbitrary — the same
 linear-steered state scored **13°** under one probe and **91°** under another, both
 legitimately fitted. Detected when the half-block diagnosis reported 93° at a position
-where F12 had reported 23°. All steering results that can drive the readout off-manifold
+where F14 had reported 23°. All steering results that can drive the readout off-manifold
 now report **certainty** (‖pred‖) and **alignment** (⟨pred, unit(intended)⟩), which are
-well behaved at zero. F12's corrected numbers are considerably stronger than the originals;
+well behaved at zero. F14's corrected numbers are considerably stronger than the originals;
 F8's are unaffected, as certainty never collapses there.
 
 **C6. Steering dropped the per-probe mean term (fixed; F8 did not exist before this).**
@@ -1188,16 +1188,16 @@ residuals are now ~1e-15 and an assertion enforces it.
 
 ## Open
 
-- **Deeper propagation for the path experiment.** F12 reads one block downstream; F9
+- **Deeper propagation for the path experiment.** F14 reads one block downstream; F9
   showed the linear effect decays to 15 % by four blocks. Whether the manifold advantage
   *widens* with depth is the natural follow-up and needs no new machinery.
 - **Deeper open-manifold controls.** Run to two blocks; whether the null result holds at four
-  is untested, though F12's mechanism predicts it should.
+  is untested, though F14's mechanism predicts it should.
 - **Deeper propagation.** F17 now reaches L24 (+8 blocks), where the spline still leads 2×.
   Whether that holds to the final layer is a direct extension.
 - **Clamping the spline.** F17 clamps only the linear subspace. Clamping the on-manifold target at
   each block is the obvious next arm and needs no new machinery.
-- **Does F15 hold for the scalars?** F12 predicts little difference for speed, since its
+- **Does F15 hold for the scalars?** F14 predicts little difference for speed, since its
   off-manifold region is not semantically empty — worth confirming.
 - **Stage 5 — spline / manifold steering.** `Manifold` verified on a synthetic circle
   (periodic fit recovers it; linear path has 238× the off-manifold energy); never fitted

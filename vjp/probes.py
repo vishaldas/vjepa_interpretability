@@ -228,7 +228,7 @@ def steer(X: np.ndarray, V: np.ndarray, probes: list[Ridge],
 
     Note the norm being minimised is Euclidean in the ambient activation space,
     which is blind to where the data actually lies -- this is precisely why the
-    intervention takes an off-manifold shortcut (F11, F12, F15).
+    intervention takes an off-manifold shortcut (F13, F14, F15).
     """
     coef = np.concatenate([p.readout for p in probes], 1)        # [D, M]
     b = np.concatenate([probe_intercept(p) for p in probes])     # [M]

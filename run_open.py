@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-"""Open question: does an ON-MANIFOLD edit resist the attention rotation of F14?
+"""Open question: does an ON-MANIFOLD edit resist the attention rotation of F11?
 
-F12 showed manifold steering stays accurate mid-path where linear steering collapses.
-F14 showed the linear edit fails because attention rotates it out of the readout
-subspace. This runs F14's instrumentation on both routes at the SAME t, so the only
+F14 showed manifold steering stays accurate mid-path where linear steering collapses.
+F11 showed the linear edit fails because attention rotates it out of the readout
+subspace. This runs F11's instrumentation on both routes at the SAME t, so the only
 difference is the geometry of the edit.
 """
 import numpy as np

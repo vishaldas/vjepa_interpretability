@@ -1,7 +1,7 @@
 """Continuous feature clamping across blocks — the world-model analogue of
 per-layer feature clamping in LLM interpretability.
 
-F14 showed a one-shot Euclidean edit at layer 16 is not erased but *rotated* out
+F11 showed a one-shot Euclidean edit at layer 16 is not erased but *rotated* out
 of the readout subspace by attention, keeping only 32% of its aligned component
 four blocks later. The obvious counter is to stop asking the edit to survive and
 instead re-assert it at every block.
@@ -45,7 +45,7 @@ def clamp_forward(model, pixels, layer, target, probes, readout_layers,
     """Run the encoder while asserting the target readout across several blocks.
 
     mode='none'    untouched control
-    mode='once'    inject delta0 at `layer` only  (the F14 baseline)
+    mode='once'    inject delta0 at `layer` only  (the F11 baseline)
     mode='reinject' add delta0 again at each of the next n_blocks
     mode='clamp'   at each block, apply the minimum-norm correction that makes
                    that block's probe read `target`
