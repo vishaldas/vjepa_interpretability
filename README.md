@@ -67,6 +67,11 @@ variable can be steered.
   seen at the layer of the intervention.
 - **Continuous feature clamping** across blocks also works (+0.36 → +0.79 at four blocks),
   but needs four interventions to achieve less than one geometry-respecting edit.
+- **And it changes what the model forecasts.** Driving the shipped predictor after a layer-16
+  edit, the on-manifold edit moves the forecast onto the target (81.4° → **14.4°**, 95 % of the
+  floor-to-ceiling gap) while the Euclidean edit barely moves it at all (76.4°, 7 %) — 41 % even
+  when rescaled to the same perturbation norm. Satisfying a probe is not the same as steering a
+  world model.
 
 ---
 
@@ -183,3 +188,6 @@ deliberately rather than tidied away. Two changed headline results:
 - The checkpoint was trained at 64 frames per clip and is fed 16. Both run; the 64-frame
   variant is affordable as an ablation on a subset and has not been run.
 - Retention is measured to eight blocks past the intervention, not to the final layer.
+- "Behaviour" means the predictor's **latent** forecast read by a probe, not decoded pixels. The
+  predictor forecasts encoder-space latents, so F18 closes the gap between representation and
+  prediction, but not between prediction and rendered output.

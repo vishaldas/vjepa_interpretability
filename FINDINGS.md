@@ -1035,6 +1035,70 @@ direction the network maintains.*
 
 ---
 
+## F18. The on-manifold edit changes what the model FORECASTS — the Euclidean one does not **[solid]**
+
+Every other Part 2 result reads a ridge probe on a downstream *encoder* layer, so it speaks
+about the representation. Wurgaft et al.'s thesis links activation geometry to **behaviour**.
+For a JEPA the nearest thing to behaviour is the predictor's forecast, and the checkpoint ships
+a driveable one (12 layers, d=384, forecasting back into encoder space).
+
+**Setup.** Inject the edit at layer 16, propagate through the whole encoder, then ask the
+predictor to forecast temporal blocks 4–7 from blocks 0–3. A probe fitted on **unsteered**
+forecasts then reads that forecast. A change here means the model's own forward prediction
+moved, not merely its internal state. Pooling is the leak-free top-8 salience, not the tracker
+mask.
+
+| arm | MAE → target | MAE → own | align → target | align → own | certainty |
+|---|---:|---:|---:|---:|---:|
+| control (no edit) | 81.4° | **6.5°** | +0.109 | +0.928 | 0.937 |
+| multi-probe K=16 | **76.4°** | 9.0° | +0.212 | +0.830 | 0.845 |
+| **spline (on-manifold)** | **14.4°** | 74.7° | **+0.957** | +0.188 | 0.999 |
+
+The forecast probe's own ceiling is **11.1°**, so the floor-to-ceiling gap is 70.3°.
+
+- **Control:** the forecast encodes the clip's own direction (6.5°) — the predictor's output is
+  readable, which the experiment needs.
+- **Multi-probe:** closes **7 %** of the gap. The forecast still encodes the *original* motion
+  (align → own **+0.830**). The Euclidean edit moves the representation and the model goes on
+  predicting the motion it was always going to predict.
+- **Spline:** closes **95 %**. The forecast now encodes the **target** (+0.957) and no longer the
+  original (+0.188), with certainty *rising* to 0.999.
+
+### Control: not a magnitude effect
+
+| arm | ‖Δ‖ | MAE → target | align → target | gap closed |
+|---|---:|---:|---:|---:|
+| multi-probe ×1.00 | 8.5 | 76.4° | +0.212 | 7 % |
+| multi-probe ×2.00 | 17.0 | 65.4° | +0.352 | 23 % |
+| **multi-probe ×2.61** | **22.1** | 52.9° | +0.442 | 41 % |
+| **spline** | **22.1** | **14.4°** | **+0.957** | **95 %** |
+
+Scaling the Euclidean edit does help here — unlike retention in F15, where bigger was worse —
+but at **matched perturbation norm** it reaches 41 % against the spline's 95 %, a **2.2×**
+difference in behavioural effect.
+
+**Evidence:** `run_behaviour.py`; `vjp/behaviour.py`;
+`artifacts/figures/behaviour_forecast.png`.
+
+### Why this is the strongest result here
+
+F15 shows the on-manifold edit is better *preserved* (76 % against 25 % of its readout alignment
+after four blocks). F18 shows something stronger and different in kind: **the on-manifold edit
+changes the model's prediction about the future, and the Euclidean edit essentially does not.**
+
+That is Wurgaft et al.'s claim in its own terms — geometry and behaviour are linked, and an
+intervention that respects the geometry produces behaviour the model follows. It also sharpens
+the practical reading of F8: multi-probe steering satisfies every probe you point at it while
+leaving the model's forecast almost untouched. **Satisfying a probe is not the same as steering
+a world model.**
+
+*Caveat: "behaviour" here is still a latent forecast read by a probe, not decoded pixels. The
+predictor forecasts encoder-space latents, so this closes the gap between representation and
+prediction but not between prediction and rendered output.*
+
+
+---
+
 ## Corrections — bugs found and fixed
 
 Two of these changed results materially. Recorded because they affect how much to trust
@@ -1117,9 +1181,8 @@ residuals are now ~1e-15 and an assertion enforces it.
 - **Stage 5 — spline / manifold steering.** `Manifold` verified on a synthetic circle
   (periodic fit recovers it; linear path has 238× the off-manifold energy); never fitted
   to real activations. F4 says fit in ~64-D.
-- **Behaviour channel for Part 2.** The predictor ships and is driveable
-  (cos 0.597 vs 0.482 shuffled) but the margin is modest because ~98 % of tokens are
-  background — restrict the readout to object tokens.
+- **Decoded-pixel behaviour.** F18 reads the predictor's latent forecast. Decoding it to
+  frames would close the last step between prediction and rendered output.
 - **Cross-dataset direction transfer.** Theta spans all 64 values in all three datasets;
   a direction probe trained on `direction` can be tested on `speed` / `acceleration`
   clips. Cheap, and the best generalisation test the data affords. Not yet run.
