@@ -15,7 +15,7 @@ feature clamping.
 
 | | |
 |---|---|
-| **[FINDINGS.md](FINDINGS.md)** | 17 findings, each with its evidence table, the command that reproduces it, and a status marker. **Includes a log of seven corrections** — errors found and fixed, several of which reversed a headline result. |
+| **[FINDINGS.md](FINDINGS.md)** | 18 findings, each with its evidence table, the command that reproduces it, and a status marker. **Includes a log of ten corrections** — errors found and fixed, several of which reversed a headline result. |
 | **[artifacts/deck/](artifacts/deck/)** | The presentation (`.pptx`, 12 slides incl. one backup), with speaker notes. |
 | **[notes/SETUP_FINDINGS.md](notes/SETUP_FINDINGS.md)** | Everything measured about the model and data rather than assumed. |
 | **[notes/CACHE.md](notes/CACHE.md)** | Feature cache layout and the train/val/test protocol. |
@@ -58,8 +58,8 @@ variable can be steered.
   curvature**: direction's ring is closed, so a chord must cross an interior that corresponds
   to no direction at all.
 - At that midpoint the model holds a **structured, physically impossible state** — axis intact
-  (5.9° error), speed degraded but retained (per-clip error 2.2× its baseline, still 0.14 m/s on
-  a 0.25–4.0 range), direction annihilated (certainty 0.18, i.e. zero information).
+  (5.9° error), speed degraded but retained (per-clip *error* rises to 2.2× its baseline — 0.14 m/s
+  of error on a 0.25–4.0 m/s label range, so the speed is still clearly encoded), direction annihilated (certainty 0.18, i.e. zero information).
 - The edit is **not erased downstream but rotated**: 69 % of its magnitude survives four
   blocks while only 32 % of its readout-aligned component does. **Attention accounts for 77 %**
   of the decay; LayerNorm is ruled out and the MLP contributes little.
@@ -69,8 +69,8 @@ variable can be steered.
 - **Continuous feature clamping** across blocks also works (+0.36 → +0.79 at four blocks),
   but needs four interventions to achieve less than one geometry-respecting edit.
 - **And it changes what the model forecasts.** Driving the shipped predictor after a layer-16
-  edit, the on-manifold edit moves the forecast onto the target (81.4° → **14.4°**, 95 % of the
-  floor-to-ceiling gap) while the Euclidean edit barely moves it at all (76.4°, 7 %) — 41 % even
+  edit, the on-manifold edit moves the forecast onto the target (81.4° → **14.4°**, 89 % of the
+  floor-to-ceiling gap) while the Euclidean edit barely moves it at all (76.4°, 7 %) — 38 % even
   when rescaled to the same perturbation norm. Satisfying a probe is not the same as steering a
   world model.
 
@@ -161,7 +161,7 @@ its mask-only floor; the clamping arm against a subspace-size-matched baseline.
 
 ## Corrections
 
-[FINDINGS.md](FINDINGS.md) carries a log of seven errors caught during the work, kept
+[FINDINGS.md](FINDINGS.md) carries a log of ten errors caught during the work, kept
 deliberately rather than tidied away. Two changed headline results:
 
 - **INLP was silently stalling.** Once a direction had been projected out, its feature variance

@@ -741,10 +741,10 @@ direction, whose readout falls to **zero information**. At 2.2× the speed error
 So this is the *paradox* outcome, not the tidy "left + right = stationary" one — the centre of
 the direction ring is **not** the zero-speed state.
 
-**And the axis survives too, at full strength.** The state is not vaguely incoherent: it
-encodes *"an object moving along this specific line, at 2.1 m/s, with no fact about which
-of the two ways."* The direction bit has been surgically annihilated while everything else
-is intact.
+**And the axis survives at full strength.** The state is not vaguely incoherent: it encodes
+*"an object moving along this specific line, at roughly 2.1 m/s, with no fact about which of
+the two ways."* The direction bit is annihilated outright; the axis is untouched; speed is
+knocked about but survives. Three different fates, not two.
 
 This follows exactly from the harmonic structure of F10, and is its sharpest confirmation:
 
@@ -1063,30 +1063,36 @@ mask.
 | multi-probe K=16 | **76.4°** | 9.0° | +0.212 | +0.830 | 0.845 |
 | **spline (on-manifold)** | **14.4°** | 74.7° | **+0.957** | +0.188 | 0.999 |
 
-The forecast probe's own ceiling is **11.1°**, so the floor-to-ceiling gap is 70.3°.
+**Floor and ceiling.** The floor is 81.4° — what the probe reads on an unsteered forecast
+against a *target* it was never moved toward. The ceiling is **6.5°**: the *same* probe, on the
+*same* held-out-value test clips, reading each clip's **own** label. So the gap is 74.9°.
+(An earlier draft quoted 11.1°, the error on the alpha-selection fold — a different split, on
+train values, and not comparable to the steered numbers. See C10.)
 
 - **Control:** the forecast encodes the clip's own direction (6.5°) — the predictor's output is
   readable, which the experiment needs.
-- **Multi-probe:** closes **7 %** of the gap. The forecast still encodes the *original* motion
+- **Multi-probe:** closes **6.6 %** of the gap. The forecast still encodes the *original* motion
   (align → own **+0.830**). The Euclidean edit moves the representation and the model goes on
   predicting the motion it was always going to predict.
-- **Spline:** closes **95 %**. The forecast now encodes the **target** (+0.957) and no longer the
+- **Spline:** closes **89 %**. The forecast now encodes the **target** (+0.957) and no longer the
   original (+0.188), with certainty *rising* to 0.999.
 
 ### Control: not a magnitude effect
 
-| arm | ‖Δ‖ | MAE → target | align → target | gap closed |
-|---|---:|---:|---:|---:|
-| multi-probe ×1.00 | 8.5 | 76.4° | +0.212 | 7 % |
-| multi-probe ×2.00 | 17.0 | 65.4° | +0.352 | 23 % |
-| **multi-probe ×2.61** | **22.1** | 52.9° | +0.442 | 41 % |
-| **spline** | **22.1** | **14.4°** | **+0.957** | **95 %** |
+| arm | ‖Δ‖ | MAE → target | MAE → own | align → target | gap closed |
+|---|---:|---:|---:|---:|---:|
+| control (no edit) | 0.0 | 81.4° | **6.5°** | +0.109 | — |
+| multi-probe ×1.00 | 8.5 | 76.4° | 9.0° | +0.212 | **6.6 %** |
+| multi-probe ×2.00 | 17.0 | 65.4° | 20.6° | +0.352 | 21.4 % |
+| **multi-probe ×2.61** | **22.1** | 52.9° | 33.8° | +0.442 | **38.1 %** |
+| **spline** | **22.1** | **14.4°** | 74.7° | **+0.957** | **89.4 %** |
 
 Scaling the Euclidean edit does help here — unlike retention in F15, where bigger was worse —
-but at **matched perturbation norm** it reaches 41 % against the spline's 95 %, a **2.2×**
+but at **matched perturbation norm** it reaches 38 % against the spline's 89 %, a **2.3×**
 difference in behavioural effect.
 
-**Evidence:** `run_behaviour.py`; `vjp/behaviour.py`;
+**Evidence:** `run_behaviour.py` (all five arms, floor and ceiling saved to
+`artifacts/results/behaviour_predictor.json`); `vjp/behaviour.py`;
 `artifacts/figures/behaviour_forecast.png`.
 
 ### Why this is the strongest result here
@@ -1144,6 +1150,33 @@ with top-K selection.
 **C5. PCA for the reduced-space INLP is fitted on train rows only.** An earlier diagnostic
 SVD used all rows, which would have leaked held-out values into the basis.
 
+**C6. Steering dropped the per-probe mean term (fixed; F8 did not exist before this).**
+A probe standardises before reading, so `predict(x) = (x - mu) @ readout + ym` — the
+intercept is `ym - mu @ readout`. `steer()` used `ym` alone, biasing every solve.
+*Symptom:* the basis probes missed their own target by MAE 1.06 on speed, so "steering"
+did nothing and speed appeared to get **worse** with more probes (0.757 → 1.572). The
+error was near-invisible for direction because (sin, cos) targets are near zero-mean,
+which is exactly how it survived the synthetic test. Fixed via `probe_intercept()`;
+residuals are now ~1e-15 and an assertion enforces it.
+**C7. Circular MAE is degenerate when the readout collapses (fixed; strengthened F14).**
+Circular MAE takes `arctan2` of the predicted (sin, cos) pair. When an intervention drives
+the readout toward zero norm, that angle is noise and the metric is arbitrary — the same
+linear-steered state scored **13°** under one probe and **91°** under another, both
+legitimately fitted. Detected when the half-block diagnosis reported 93° at a position
+where F14 had reported 23°. All steering results that can drive the readout off-manifold
+now report **certainty** (‖pred‖) and **alignment** (⟨pred, unit(intended)⟩), which are
+well behaved at zero. F14's corrected numbers are considerably stronger than the originals;
+F8's are unaffected, as certainty never collapses there.
+
+**C8. "Direction occupies 2× the dimensions" conflated readout rank with redundancy (fixed; reframed F3).**
+INLP removes `k` dimensions per round, where `k` is the rank of the probe's readout — 2 for a
+(sin, cos) target, 1 for a scalar. Reporting *dimensions removed* therefore built a factor of two
+into the comparison before any property of the representation was measured. Counting **rounds**
+instead gives 71 / 69 / 67 — essentially equal. Confirmed decisively by re-running direction with a
+1-d target (sin θ alone: 76 dims; cos θ alone: 54), which lands in the scalars' range. The random
+control and the redundancy claim are unaffected; only the cross-variable *ratio* was wrong. A real
+~1.2× asymmetry survives at the 10 % threshold.
+
 **C9. "Speed untouched" overstated the result, and two documents quoted the wrong endpoint (fixed).**
 The claim rested on the population *mean*, which is flat along the whole chord (2.10 → 2.17 m/s).
 Per-clip error is not: it runs 0.071 → 0.136 → 0.258, i.e. **1.1× → 2.2× → 4.1×** the speed
@@ -1156,56 +1189,38 @@ plots per-clip error rather than the flat mean, and the speed badge reads DEGRAD
 midpoint; calling it NULL would have been the opposite error, since 0.26 m/s on a 0.25–4.0 range
 is still informative.
 
-**C8. "Direction occupies 2× the dimensions" conflated readout rank with redundancy (fixed; reframed F3).**
-INLP removes `k` dimensions per round, where `k` is the rank of the probe's readout — 2 for a
-(sin, cos) target, 1 for a scalar. Reporting *dimensions removed* therefore built a factor of two
-into the comparison before any property of the representation was measured. Counting **rounds**
-instead gives 71 / 69 / 67 — essentially equal. Confirmed decisively by re-running direction with a
-1-d target (sin θ alone: 76 dims; cos θ alone: 54), which lands in the scalars' range. The random
-control and the redundancy claim are unaffected; only the cross-variable *ratio* was wrong. A real
-~1.2× asymmetry survives at the 10 % threshold.
 
-**C7. Circular MAE is degenerate when the readout collapses (fixed; strengthened F14).**
-Circular MAE takes `arctan2` of the predicted (sin, cos) pair. When an intervention drives
-the readout toward zero norm, that angle is noise and the metric is arbitrary — the same
-linear-steered state scored **13°** under one probe and **91°** under another, both
-legitimately fitted. Detected when the half-block diagnosis reported 93° at a position
-where F14 had reported 23°. All steering results that can drive the readout off-manifold
-now report **certainty** (‖pred‖) and **alignment** (⟨pred, unit(intended)⟩), which are
-well behaved at zero. F14's corrected numbers are considerably stronger than the originals;
-F8's are unaffected, as certainty never collapses there.
 
-**C6. Steering dropped the per-probe mean term (fixed; F8 did not exist before this).**
-A probe standardises before reading, so `predict(x) = (x - mu) @ readout + ym` — the
-intercept is `ym - mu @ readout`. `steer()` used `ym` alone, biasing every solve.
-*Symptom:* the basis probes missed their own target by MAE 1.06 on speed, so "steering"
-did nothing and speed appeared to get **worse** with more probes (0.757 → 1.572). The
-error was near-invisible for direction because (sin, cos) targets are near zero-mean,
-which is exactly how it survived the synthetic test. Fixed via `probe_intercept()`;
-residuals are now ~1e-15 and an assertion enforces it.
+**C10. The forecast ceiling was quoted from the wrong split, and two arms were unreproducible (fixed).**
+F18 originally quoted a forecast-probe ceiling of 11.1°, measured on the 150-clip
+alpha-selection fold — which sits on *train* values and is not comparable to the steered
+numbers. Worse, the control arm read its own label at 6.5°, i.e. *better than the stated
+ceiling*, so a dashed ceiling line sat above a bar that beat it. The ceiling is now the control
+arm itself: the same probe, same held-out-value test clips, reading each clip's own label. The
+spline's gap-closed falls from 95 % to **89 %** and the matched-norm comparison from 41 % to
+38 % — the finding is unchanged, the arithmetic is now consistent. Separately, the ×2.00 and
+×2.61 rescaled arms were computed in a scratch script that was not kept, so the published table
+could not be regenerated; `run_behaviour.py` now runs all five arms and saves floor, ceiling and
+norms with the results.
+
 
 ---
 
 ## Open
 
-- **Deeper propagation for the path experiment.** F14 reads one block downstream; F9
-  showed the linear effect decays to 15 % by four blocks. Whether the manifold advantage
-  *widens* with depth is the natural follow-up and needs no new machinery.
-- **Deeper open-manifold controls.** Run to two blocks; whether the null result holds at four
-  is untested, though F14's mechanism predicts it should.
-- **Deeper propagation.** F17 now reaches L24 (+8 blocks), where the spline still leads 2×.
-  Whether that holds to the final layer is a direct extension.
-- **Clamping the spline.** F17 clamps only the linear subspace. Clamping the on-manifold target at
-  each block is the obvious next arm and needs no new machinery.
-- **Does F15 hold for the scalars?** F14 predicts little difference for speed, since its
+- **Deeper propagation.** F14's path test reads one block downstream and F17 reaches eight,
+  where the spline still leads 2×. Whether the manifold advantage widens or closes by the
+  final layer is a direct extension of the existing machinery.
+- **Deeper open-manifold controls.** The speed and acceleration nulls are measured to two
+  blocks; F14's mechanism predicts they hold further out, but that is untested.
+- **Clamping the spline.** F17 clamps only the linear subspace. Clamping the on-manifold
+  target at each block is the obvious next arm and needs no new code.
+- **Does F15 hold for the scalars?** F14 predicts little difference for speed, whose
   off-manifold region is not semantically empty — worth confirming.
-- **Stage 5 — spline / manifold steering.** `Manifold` verified on a synthetic circle
-  (periodic fit recovers it; linear path has 238× the off-manifold energy); never fitted
-  to real activations. F4 says fit in ~64-D.
-- **Decoded-pixel behaviour.** F18 reads the predictor's latent forecast. Decoding it to
+- **Decoded-pixel behaviour.** F18 reads the predictor's *latent* forecast. Decoding it to
   frames would close the last step between prediction and rendered output.
-- **Cross-dataset direction transfer.** Theta spans all 64 values in all three datasets;
-  a direction probe trained on `direction` can be tested on `speed` / `acceleration`
-  clips. Cheap, and the best generalisation test the data affords. Not yet run.
-- **64-frame ablation.** The checkpoint is `fpc64`; we feed 16. ~16 min on a stratified
-  subset would turn this documented assumption into a measurement.
+- **Cross-dataset direction transfer.** Theta spans all 64 values in all three datasets, so a
+  direction probe trained on `direction` can be tested on `speed` / `acceleration` clips.
+  Cheap, and the best generalisation test the data affords. Not yet run.
+- **64-frame ablation.** The checkpoint is `fpc64`; we feed 16. ~16 min on a stratified subset
+  would turn this documented assumption into a measurement.
